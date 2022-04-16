@@ -24,7 +24,14 @@ import io.flutter.plugin.common.MethodChannel
 import io.flutter.plugin.common.PluginRegistry
 import io.flutter.view.TextureRegistry
 import java.io.File
-
+import android.graphics.ImageFormat
+import android.media.Image
+import 	android.graphics.Rect
+import android.graphics.Bitmap
+import android.graphics.YuvImage
+import java.io.OutputStream
+import 	java.io.ByteArrayOutputStream
+import 	android.graphics.BitmapFactory
 
 class MobileScanner(private val activity: Activity, private val textureRegistry: TextureRegistry)
     : MethodChannel.MethodCallHandler, EventChannel.StreamHandler, PluginRegistry.RequestPermissionsResultListener {
@@ -99,25 +106,118 @@ class MobileScanner(private val activity: Activity, private val textureRegistry:
 //        when (analyzeMode) {
 //            AnalyzeMode.BARCODE -> {
                 val mediaImage = imageProxy.image ?: return@Analyzer
-                val inputImage = InputImage.fromMediaImage(mediaImage, imageProxy.imageInfo.rotationDegrees)
-
-                scanner.process(inputImage)
-                        .addOnSuccessListener { barcodes ->
-                            for (barcode in barcodes) {
-                                val event = mapOf("name" to "barcode", "data" to barcode.data)
-                                sink?.success(event)
-                            }
-                        }
-                        .addOnFailureListener { e -> Log.e(TAG, e.message, e) }
-                        .addOnCompleteListener { imageProxy.close() }
-//            }
-//            else -> imageProxy.close()
+                if (mediaImage != null && mediaImage.format == ImageFormat.YUV_420_888) {
+                    croppedBitmap(mediaImage, imageProxy.cropRect).let { bitmap -> val inputImage =  InputImage.fromBitmap(bitmap, imageProxy.imageInfo.rotationDegrees)
+                        scanner.process(inputImage)
+                                .addOnSuccessListener { barcodes ->
+                                    for (barcode in barcodes) {
+                                        val event = mapOf("name" to "barcode", "data" to barcode.data)
+                                        sink?.success(event)
+                                    }
+                                }
+                                .addOnFailureListener { e -> Log.e(TAG, e.message, e) }
+                                .addOnCompleteListener { imageProxy.close() }
+                       
+                    
+                    }
+                } else {
+                    imageProxy.close()
+                }
+                // if (mediaImage != null && mediaImage.format == ImageFormat.YUV_420_888) {
+                //     Log.i("LOG", "mediaImage: $mediaImage")
+                //     Log.i("LOG", "imageProxy.cropRect: ${imageProxy.cropRect}")
+                //     croppedNV21(mediaImage, imageProxy.cropRect).let { byteArray ->
+                //         // requestDetectInImage(
+                //             Log.i("LOG", "byteArray: $byteArray")
+                //             val inputImage = InputImage.fromByteArray(
+                //                 byteArray,
+                //                 imageProxy.cropRect.width(),
+                //                 imageProxy.cropRect.height(),
+                //                 imageProxy.imageInfo.rotationDegrees,
+                //                 ImageFormat.NV21,
+                //             // )
+                //         )
+                //         Log.i("LOG", "-----------------------dsdadasfgasfasfas---------------------------")
+                //         scanner.process(inputImage)
+                //         .addOnSuccessListener { barcodes ->
+                //             for (barcode in barcodes) {
+                //                 val event = mapOf("name" to "barcode", "data" to barcode.data)
+                //                 sink?.success(event)
+                //             }
+                //         }
+                //         .addOnFailureListener { e -> Log.e(TAG, e.message, e) }
+                //         .addOnCompleteListener { imageProxy.close() }
+                //     }
+                // }
+            // }
+            //            else -> imageProxy.close()
+                // val inputImage = InputImage.fromMediaImage(mediaImage, imageProxy.imageInfo.rotationDegrees)
+              
+                // scanner.process(inputImage)
+                // .addOnSuccessListener { barcodes ->
+                //     for (barcode in barcodes) {
+                //         val event = mapOf("name" to "barcode", "data" to barcode.data)
+                //         sink?.success(event)
+                //     }
+                // }
+                // .addOnFailureListener { e -> Log.e(TAG, e.message, e) }
+                // .addOnCompleteListener { imageProxy.close() }
+              
+//           
 //        }
     }
-
+    private fun croppedBitmap(mediaImage: Image, cropRect: Rect): Bitmap {
+        val yBuffer = mediaImage.planes[0].buffer // Y
+        val vuBuffer = mediaImage.planes[2].buffer // VU
+   
+        val ySize = yBuffer.remaining()
+        val vuSize = vuBuffer.remaining()
+   
+        val nv21 = ByteArray(ySize + vuSize)
+   
+        yBuffer.get(nv21, 0, ySize)
+        vuBuffer.get(nv21, ySize, vuSize)
+   
+        val yuvImage = YuvImage(nv21, ImageFormat.NV21, mediaImage.width, mediaImage.height, null)
+        val outputStream = ByteArrayOutputStream()
+        yuvImage.compressToJpeg(cropRect, 100, outputStream)
+        val imageBytes = outputStream.toByteArray()
+        Log.i("LOG", "imageBytes: ${imageBytes.size}")
+        return BitmapFactory.decodeByteArray(imageBytes, 0, imageBytes.size)
+    }
+    private fun croppedNV21(mediaImage: Image, cropRect: Rect): ByteArray {
+        val yBuffer = mediaImage.planes[0].buffer // Y
+        val vuBuffer = mediaImage.planes[2].buffer // VU
+   
+        val ySize = yBuffer.remaining()
+        val vuSize = vuBuffer.remaining()
+   
+        val nv21 = ByteArray(ySize + vuSize)
+   
+        yBuffer.get(nv21, 0, ySize)
+        vuBuffer.get(nv21, ySize, vuSize)
+        
+        return cropByteArray(nv21, mediaImage.width, cropRect)
+    }
+   
+    private fun cropByteArray(array: ByteArray, imageWidth: Int, cropRect: Rect): ByteArray {
+        val croppedArray = ByteArray(cropRect.width() * cropRect.height())
+        var i = 0
+        array.forEachIndexed { index, byte ->
+            val x = index % imageWidth
+            val y = index / imageWidth
+   
+            if (cropRect.left <= x && x < cropRect.right && cropRect.top <= y && y < cropRect.bottom) {
+                croppedArray[i] = byte
+                i++
+            }
+        }
+        Log.i("LOG", "croppedArray: $croppedArray")
+        return croppedArray
+    }
 
     private var scanner = BarcodeScanning.getClient()
-
+    
     @ExperimentalGetImage
     private fun start(call: MethodCall, result: MethodChannel.Result) {
         if (camera != null && preview != null) {
@@ -157,6 +257,7 @@ class MobileScanner(private val activity: Activity, private val textureRegistry:
                 // Preview
                 val surfaceProvider = Preview.SurfaceProvider { request ->
                     val texture = textureEntry!!.surfaceTexture()
+                    // texture.setDefaultBufferSize(240, 240)
                     texture.setDefaultBufferSize(request.resolution.width, request.resolution.height)
                     val surface = Surface(texture)
                     request.provideSurface(surface, executor) { }
@@ -175,6 +276,7 @@ class MobileScanner(private val activity: Activity, private val textureRegistry:
                 if (ratio != null) {
                     analysisBuilder.setTargetAspectRatio(ratio)
                 }
+                analysisBuilder.setTargetResolution(Size(200,300))
                 val analysis = analysisBuilder.build().apply { setAnalyzer(executor, analyzer) }
 
                 // Select the correct camera
