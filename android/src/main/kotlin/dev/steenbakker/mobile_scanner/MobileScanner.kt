@@ -107,22 +107,37 @@ class MobileScanner(private val activity: Activity, private val textureRegistry:
 //        when (analyzeMode) {
 //            AnalyzeMode.BARCODE -> {
                 val mediaImage = imageProxy.image ?: return@Analyzer
-                if (mediaImage != null && mediaImage.format == ImageFormat.YUV_420_888) {toBitmap(mediaImage).let{bitmap ->val inputImage = InputImage.fromBitmap(bitmap, imageProxy.imageInfo.rotationDegrees)
-                    Log.i("LOG", "---------------------------------------------dsdsdsds----------------------------------------------------------------------")
+                // if (mediaImage != null && mediaImage.format == ImageFormat.YUV_420_888) {toBitmap(mediaImage).let{bitmap ->val inputImage = InputImage.fromBitmap(bitmap, imageProxy.imageInfo.rotationDegrees)
+                //     Log.i("LOG", "---------------------------------------------dsdsdsds----------------------------------------------------------------------")
                    
-                    scanner.process(inputImage)
+                //     scanner.process(inputImage)
+                // .addOnSuccessListener { barcodes ->
+                //     for (barcode in barcodes) {
+                //         val event = mapOf("name" to "barcode", "data" to barcode.data)
+                //         Log.i("LOG", "event: $event")
+                //         sink?.success(event)
+                //     }
+                // }
+                // .addOnFailureListener { e -> Log.e(TAG, e.message, e) }
+                // .addOnCompleteListener { imageProxy.close() }
+                // }}
+                val inputImage = InputImage.fromMediaImage(mediaImage, imageProxy.imageInfo.rotationDegrees)
+                scanner.process(inputImage)
                 .addOnSuccessListener { barcodes ->
-                    for (barcode in barcodes) {
+                    for (barcode in barcodes) { 
+                        // Log.i("LOG", "barcode: ${barcode.boundingBox!!.left} ${barcode.boundingBox!!.right} ${barcode.boundingBox!!.top} ${barcode.boundingBox!!.bottom}")
+                        if (barcode.boundingBox!!.left > 100 && barcode.boundingBox!!.right < 400 &&
+                    barcode.boundingBox!!.top > 200 && barcode.boundingBox!!.bottom < 500) {
                         val event = mapOf("name" to "barcode", "data" to barcode.data)
-                        Log.i("LOG", "event: $event")
+                        // Log.i("LOG", "event: $event")
                         sink?.success(event)
+            }
+                       
                     }
                 }
                 .addOnFailureListener { e -> Log.e(TAG, e.message, e) }
                 .addOnCompleteListener { imageProxy.close() }
-                }}
-                // val inputImage = InputImage.fromMediaImage(mediaImage, imageProxy.imageInfo.rotationDegrees)
-              
+                
                 
     }
     private fun toBitmap(image:Image):Bitmap {
@@ -143,11 +158,13 @@ class MobileScanner(private val activity: Activity, private val textureRegistry:
     
         val yuvImage =  YuvImage(nv21, ImageFormat.NV21, image.getWidth(), image.getHeight(), null);
         val  out =  ByteArrayOutputStream();
-        yuvImage.compressToJpeg( Rect(0, 0, yuvImage.getWidth(), yuvImage.getHeight()), 75, out);
+        yuvImage.compressToJpeg( Rect(0, 0, yuvImage.getWidth(), yuvImage.getHeight()), 100, out);
     
         val imageBytes = out.toByteArray();
         return BitmapFactory.decodeByteArray(imageBytes, 0, imageBytes.size);
     }
+    
+
     private var scanner = BarcodeScanning.getClient()
     
     @ExperimentalGetImage
@@ -208,7 +225,7 @@ class MobileScanner(private val activity: Activity, private val textureRegistry:
                 if (ratio != null) {
                     analysisBuilder.setTargetAspectRatio(ratio)
                 }
-                analysisBuilder.setTargetResolution(Size(200,300))
+                // analysisBuilder.setTargetResolution(Size(200,300))
                 val analysis = analysisBuilder.build().apply { setAnalyzer(executor, analyzer) }
 
                 // Select the correct camera
