@@ -88,19 +88,31 @@ class _MobileScannerState extends State<MobileScanner>
                 }
               });
               return ClipRect(
-                child: SizedBox(
-                  width: MediaQuery.of(context).size.width,
-                  height: MediaQuery.of(context).size.height,
-                  child: FittedBox(
-                    fit: widget.fit,
-                    child: SizedBox(
-                      width: value.size.width,
-                      height: value.size.height,
-                      child: kIsWeb
-                          ? HtmlElementView(viewType: value.webId!)
-                          : Texture(textureId: value.textureId!),
+                child: Stack(
+                  children: [
+                    SizedBox(
+                      width: MediaQuery.of(context).size.width,
+                      height: MediaQuery.of(context).size.height,
+                      child: FittedBox(
+                        fit: widget.fit,
+                        child: SizedBox(
+                          width: value.size.width,
+                          height: value.size.height,
+                          child: kIsWeb
+                              ? HtmlElementView(viewType: value.webId!)
+                              : Texture(textureId: value.textureId!),
+                        ),
+                      ),
                     ),
-                  ),
+                    Positioned.fill(
+                        child: Center(
+                      child: Container(
+                        width: 250,
+                        height: 250,
+                        color: Colors.amber.withOpacity(0.2),
+                      ),
+                    ))
+                  ],
                 ),
               );
             }
