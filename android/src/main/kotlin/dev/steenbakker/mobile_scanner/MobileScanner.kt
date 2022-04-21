@@ -24,15 +24,7 @@ import io.flutter.plugin.common.MethodChannel
 import io.flutter.plugin.common.PluginRegistry
 import io.flutter.view.TextureRegistry
 import java.io.File
-import android.graphics.ImageFormat
-import android.media.Image
-import 	android.graphics.Rect
-import android.graphics.Bitmap
-import android.graphics.YuvImage
-import java.io.OutputStream
-import 	java.io.ByteArrayOutputStream
-import 	android.graphics.BitmapFactory
-import 	android.util.Base64
+
 
 class MobileScanner(private val activity: Activity, private val textureRegistry: TextureRegistry)
     : MethodChannel.MethodCallHandler, EventChannel.StreamHandler, PluginRegistry.RequestPermissionsResultListener {
@@ -107,66 +99,25 @@ class MobileScanner(private val activity: Activity, private val textureRegistry:
 //        when (analyzeMode) {
 //            AnalyzeMode.BARCODE -> {
                 val mediaImage = imageProxy.image ?: return@Analyzer
-                // if (mediaImage != null && mediaImage.format == ImageFormat.YUV_420_888) {toBitmap(mediaImage).let{bitmap ->val inputImage = InputImage.fromBitmap(bitmap, imageProxy.imageInfo.rotationDegrees)
-                //     Log.i("LOG", "---------------------------------------------dsdsdsds----------------------------------------------------------------------")
-                   
-                //     scanner.process(inputImage)
-                // .addOnSuccessListener { barcodes ->
-                //     for (barcode in barcodes) {
-                //         val event = mapOf("name" to "barcode", "data" to barcode.data)
-                //         Log.i("LOG", "event: $event")
-                //         sink?.success(event)
-                //     }
-                // }
-                // .addOnFailureListener { e -> Log.e(TAG, e.message, e) }
-                // .addOnCompleteListener { imageProxy.close() }
-                // }}
                 val inputImage = InputImage.fromMediaImage(mediaImage, imageProxy.imageInfo.rotationDegrees)
+
                 scanner.process(inputImage)
-                .addOnSuccessListener { barcodes ->
-                    for (barcode in barcodes) { 
-                        // Log.i("LOG", "barcode: ${barcode.boundingBox!!.left} ${barcode.boundingBox!!.right} ${barcode.boundingBox!!.top} ${barcode.boundingBox!!.bottom}")
-                        if (barcode.boundingBox!!.left > 100 && barcode.boundingBox!!.right < 400 &&
-                    barcode.boundingBox!!.top > 200 && barcode.boundingBox!!.bottom < 500) {
-                        val event = mapOf("name" to "barcode", "data" to barcode.data)
-                        // Log.i("LOG", "event: $event")
-                        sink?.success(event)
-            }
-                       
-                    }
-                }
-                .addOnFailureListener { e -> Log.e(TAG, e.message, e) }
-                .addOnCompleteListener { imageProxy.close() }
-                
-                
+                        .addOnSuccessListener { barcodes ->
+                            for (barcode in barcodes) {
+                                val event = mapOf("name" to "barcode", "data" to barcode.data)
+                                sink?.success(event)
+                            }
+                        }
+                        .addOnFailureListener { e -> Log.e(TAG, e.message, e) }
+                        .addOnCompleteListener { imageProxy.close() }
+//            }
+//            else -> imageProxy.close()
+//        }
     }
-    private fun toBitmap(image:Image):Bitmap {
-        val planes = image.getPlanes();
-        val  yBuffer = planes[0].getBuffer();
-        val  uBuffer = planes[1].getBuffer();
-        val  vBuffer = planes[2].getBuffer();
-    
-        val  ySize = yBuffer.remaining();
-        val  uSize = uBuffer.remaining();
-        val  vSize = vBuffer.remaining();
-    
-        val  nv21 = ByteArray(ySize + uSize + vSize) ;
-        //U and V are swapped
-        yBuffer.get(nv21, 0, ySize);
-        vBuffer.get(nv21, ySize, vSize);
-        uBuffer.get(nv21, ySize + vSize, uSize);
-    
-        val yuvImage =  YuvImage(nv21, ImageFormat.NV21, image.getWidth(), image.getHeight(), null);
-        val  out =  ByteArrayOutputStream();
-        yuvImage.compressToJpeg( Rect(0, 0, yuvImage.getWidth(), yuvImage.getHeight()), 100, out);
-    
-        val imageBytes = out.toByteArray();
-        return BitmapFactory.decodeByteArray(imageBytes, 0, imageBytes.size);
-    }
-    
+
 
     private var scanner = BarcodeScanning.getClient()
-    
+
     @ExperimentalGetImage
     private fun start(call: MethodCall, result: MethodChannel.Result) {
         if (camera != null && preview != null) {
@@ -206,7 +157,7 @@ class MobileScanner(private val activity: Activity, private val textureRegistry:
                 // Preview
                 val surfaceProvider = Preview.SurfaceProvider { request ->
                     val texture = textureEntry!!.surfaceTexture()
-                    // texture.setDefaultBufferSize(240, 240)
+//                    texture.setDefaultBufferSize(1280, 720)
                     texture.setDefaultBufferSize(request.resolution.width, request.resolution.height)
                     val surface = Surface(texture)
                     request.provideSurface(surface, executor) { }
@@ -216,16 +167,20 @@ class MobileScanner(private val activity: Activity, private val textureRegistry:
                 val previewBuilder = Preview.Builder()
                 if (ratio != null) {
                     previewBuilder.setTargetAspectRatio(ratio)
+//                    previewBuilder.setTargetResolution(Size(1280, 720))
                 }
+//                previewBuilder.setTargetResolution(Size(720, 1280))
                 preview = previewBuilder.build().apply { setSurfaceProvider(surfaceProvider) }
 
                 // Build the analyzer to be passed on to MLKit
                 val analysisBuilder = ImageAnalysis.Builder()
                         .setBackpressureStrategy(ImageAnalysis.STRATEGY_KEEP_ONLY_LATEST)
-                if (ratio != null) {
-                    analysisBuilder.setTargetAspectRatio(ratio)
-                }
-                // analysisBuilder.setTargetResolution(Size(200,300))
+//                if (ratio != null) {
+////                    analysisBuilder.setTargetAspectRatio(ratio)
+//                    analysisBuilder.setTargetResolution(Size(300, 300))
+//                }
+//                analysisBuilder.setTargetAspectRatio(1)
+                analysisBuilder.setTargetResolution(Size(240, 320))
                 val analysis = analysisBuilder.build().apply { setAnalyzer(executor, analyzer) }
 
                 // Select the correct camera
@@ -235,9 +190,9 @@ class MobileScanner(private val activity: Activity, private val textureRegistry:
 
                 val analysisSize = analysis.resolutionInfo?.resolution ?: Size(0, 0)
                 val previewSize = preview!!.resolutionInfo?.resolution ?: Size(0, 0)
+//                Log.i("LOG", "Analyzer: $ratio")
                 Log.i("LOG", "Analyzer: $analysisSize")
                 Log.i("LOG", "Preview: $previewSize")
-
                 // Register the torch listener
                 camera!!.cameraInfo.torchState.observe(activity) { state ->
                     // TorchState.OFF = 0; TorchState.ON = 1
