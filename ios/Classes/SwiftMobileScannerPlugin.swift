@@ -108,8 +108,10 @@ public class SwiftMobileScannerPlugin: NSObject, FlutterPlugin, FlutterStreamHan
             scanner.process(image) { [self] barcodes, error in
                 if error == nil && barcodes != nil {
                     for barcode in barcodes! {
-                        if barcode.boundingBox!.left > 100 && barcode.boundingBox!.right < 400 &&
-                                            barcode.boundingBox!.top > 150 && barcode.boundingBox!.bottom < 500{ let event: [String: Any?] = ["name": "barcode", "data": barcode.data]
+                        if barcode.frame.minX > 200 && barcode.frame.minY < 400 &&
+                                            barcode.frame.width < 700 && barcode.frame.height < 700{
+
+                                             let event: [String: Any?] = ["name": "barcode", "data": barcode.data]
                                                                                                                                         sink?(event)
                                             }
 
@@ -242,9 +244,10 @@ public class SwiftMobileScannerPlugin: NSObject, FlutterPlugin, FlutterStreamHan
         captureSession.commitConfiguration()
         captureSession.startRunning()
         let demensions = CMVideoFormatDescriptionGetDimensions(device.activeFormat.formatDescription)
-        let width = Double(demensions.height)
-        let height = Double(demensions.width)
-        let size = ["width": width, "height": height]
+        let size = ["width": 1490.0, "height": 1960.0]
+//         let width = Double(demensions.height)
+//         let height = Double(demensions.width)
+//         let size = ["width": width, "height": height]
         let answer: [String : Any?] = ["textureId": textureId, "size": size, "torchable": device.hasTorch]
         result(answer)
     }
