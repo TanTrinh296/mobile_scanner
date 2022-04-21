@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:developer';
 import 'dart:io';
 
 import 'package:flutter/cupertino.dart';
@@ -152,6 +153,7 @@ class MobileScannerController {
     Map arguments = {};
     arguments['facing'] = facing.index;
     if (ratio != null) arguments['ratio'] = ratio;
+
     if (torchEnabled != null) arguments['torch'] = torchEnabled;
 
     if (formats != null) {
@@ -181,6 +183,8 @@ class MobileScannerController {
 
     hasTorch = startResult['torchable'];
 
+    // print(startResult['size'] +
+    //     "\n-----------------------------------test-------------------------------");
     if (kIsWeb) {
       args.value = MobileScannerArguments(
           webId: startResult['ViewID'],
@@ -189,9 +193,13 @@ class MobileScannerController {
     } else {
       args.value = MobileScannerArguments(
           textureId: startResult['textureId'],
+          // size: toSize(startResult['size']),
           size: toSize(startResult['size']),
           hasTorch: hasTorch);
     }
+    print("--------------------------------------------------\n" +
+        startResult['size'].toString() +
+        "\n----------------------test----------------------------\n");
 
     isStarting = false;
   }

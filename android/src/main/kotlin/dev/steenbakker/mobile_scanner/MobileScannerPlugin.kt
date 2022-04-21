@@ -8,7 +8,7 @@ import io.flutter.plugin.common.EventChannel
 import io.flutter.plugin.common.MethodChannel
 
 /** MobileScannerPlugin */
-class MobileScannerPlugin : FlutterPlugin, ActivityAware {
+class  MobileScannerPlugin : FlutterPlugin, ActivityAware {
     private var flutter: FlutterPlugin.FlutterPluginBinding? = null
     private var activity: ActivityPluginBinding? = null
     private var handler: MobileScanner? = null
