@@ -108,8 +108,11 @@ public class SwiftMobileScannerPlugin: NSObject, FlutterPlugin, FlutterStreamHan
             scanner.process(image) { [self] barcodes, error in
                 if error == nil && barcodes != nil {
                     for barcode in barcodes! {
-                        let event: [String: Any?] = ["name": "barcode", "data": barcode.data]
-                        sink?(event)
+                        if barcode.boundingBox!.left > 100 && barcode.boundingBox!.right < 400 &&
+                                            barcode.boundingBox!.top > 150 && barcode.boundingBox!.bottom < 500{ let event: [String: Any?] = ["name": "barcode", "data": barcode.data]
+                                                                                                                                        sink?(event)
+                                            }
+
                     }
                 }
                 analyzing = false

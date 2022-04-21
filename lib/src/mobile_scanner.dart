@@ -1,8 +1,10 @@
+import 'dart:ui';
+
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:mobile_scanner/mobile_scanner.dart';
 
-enum Ratio { ratio_4_3, ratio_16_9 }
+enum Ratio { ratio_4_3, ratio_8_6 }
 
 /// A widget showing a live camera preview.
 class MobileScanner extends StatefulWidget {
@@ -43,7 +45,6 @@ class MobileScanner extends StatefulWidget {
 class _MobileScannerState extends State<MobileScanner>
     with WidgetsBindingObserver {
   late MobileScannerController controller;
-
   @override
   void initState() {
     super.initState();
@@ -88,31 +89,48 @@ class _MobileScannerState extends State<MobileScanner>
                 }
               });
               return ClipRect(
-                child: Stack(
-                  children: [
-                    SizedBox(
-                      width: MediaQuery.of(context).size.width,
-                      height: MediaQuery.of(context).size.height,
-                      child: FittedBox(
+                child: SizedBox(
+                  width: MediaQuery.of(context).size.width,
+                  height: MediaQuery.of(context).size.height,
+                  child: Stack(
+                    alignment: Alignment.center,
+                    children: [
+                      FittedBox(
                         fit: widget.fit,
-                        child: SizedBox(
-                          width: value.size.width,
-                          height: value.size.height,
-                          child: kIsWeb
-                              ? HtmlElementView(viewType: value.webId!)
-                              : Texture(textureId: value.textureId!),
+                        child: Stack(
+                          alignment: Alignment.center,
+                          children: [
+                            SizedBox(
+                              width: value.size.width,
+                              height: value.size.height,
+                              child: kIsWeb
+                                  ? HtmlElementView(viewType: value.webId!)
+                                  : Texture(
+                                      textureId: value.textureId!,
+                                    ),
+                            ),
+                          ],
                         ),
                       ),
-                    ),
-                    Positioned.fill(
-                        child: Center(
-                      child: Container(
-                        width: 250,
-                        height: 250,
-                        color: Colors.amber.withOpacity(0.2),
-                      ),
-                    ))
-                  ],
+                      // SizedBox(
+                      //   width: value.size.width,
+                      //   height: value.size.height,
+                      //   // color: Colors.black.withOpacity(0.9),
+                      //   child: BackdropFilter(
+                      //     filter: ImageFilter.blur(sigmaX: 4.0, sigmaY: 4.0),
+                      //     child: Container(
+                      //       decoration: BoxDecoration(
+                      //           color: Colors.white.withOpacity(0.0)),
+                      //     ),
+                      //   ),
+                      // ),
+                      Container(
+                        width: 240,
+                        height: 320,
+                        color: Colors.blue.withOpacity(0.2),
+                      )
+                    ],
+                  ),
                 ),
               );
             }
