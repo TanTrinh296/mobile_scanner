@@ -43,10 +43,25 @@ class MobileScanner extends StatefulWidget {
 }
 
 class _MobileScannerState extends State<MobileScanner>
-    with WidgetsBindingObserver {
+    with WidgetsBindingObserver, SingleTickerProviderStateMixin {
   late MobileScannerController controller;
+  late AnimationController _animationController;
+  bool animationStopped = false;
+  String scanText = "Scan";
+  bool scanning = false;
   @override
   void initState() {
+    _animationController =
+        AnimationController(duration: const Duration(seconds: 1), vsync: this);
+
+    _animationController.addStatusListener((status) {
+      if (status == AnimationStatus.completed) {
+        animateScanAnimation(true);
+      } else if (status == AnimationStatus.dismissed) {
+        animateScanAnimation(false);
+      }
+    });
+    animateScanAnimation(false);
     super.initState();
     WidgetsBinding.instance?.addObserver(this);
     controller = widget.controller ?? MobileScannerController();
@@ -89,18 +104,18 @@ class _MobileScannerState extends State<MobileScanner>
                 }
               });
               return ClipRect(
-                child: SizedBox(
-                  width: MediaQuery.of(context).size.width,
-                  height: MediaQuery.of(context).size.height,
-                  child: Stack(
-                    alignment: Alignment.center,
-                    children: [
-                      FittedBox(
-                        fit: widget.fit,
-                        child: Stack(
-                          alignment: Alignment.center,
-                          children: [
-                            SizedBox(
+                child: Stack(
+                  children: [
+                    SizedBox(
+                      width: MediaQuery.of(context).size.width,
+                      height: MediaQuery.of(context).size.height,
+                      child: Stack(
+                        fit: StackFit.expand,
+                        alignment: Alignment.center,
+                        children: [
+                          FittedBox(
+                            fit: widget.fit,
+                            child: SizedBox(
                               width: value.size.width,
                               height: value.size.height,
                               child: kIsWeb
@@ -109,28 +124,108 @@ class _MobileScannerState extends State<MobileScanner>
                                       textureId: value.textureId!,
                                     ),
                             ),
-                          ],
-                        ),
+                          ),
+                          Stack(
+                            alignment: Alignment.center,
+                            children: [
+                              const SizedBox(
+                                width: 280,
+                                height: 280,
+                              ),
+                              ScannerAnimation(
+                                false,
+                                280,
+                                MediaQuery.of(context).size.height,
+                                animation: _animationController,
+                              ),
+                            ],
+                          ),
+                        ],
                       ),
-                      // SizedBox(
-                      //   width: value.size.width,
-                      //   height: value.size.height,
-                      //   // color: Colors.black.withOpacity(0.9),
-                      //   child: BackdropFilter(
-                      //     filter: ImageFilter.blur(sigmaX: 4.0, sigmaY: 4.0),
-                      //     child: Container(
-                      //       decoration: BoxDecoration(
-                      //           color: Colors.white.withOpacity(0.0)),
-                      //     ),
-                      //   ),
-                      // ),
-                      Container(
-                        width: 240,
-                        height: 320,
-                        color: Colors.blue.withOpacity(0.2),
-                      )
-                    ],
-                  ),
+                    ),
+                    ColorFiltered(
+                      colorFilter: ColorFilter.mode(
+                          Colors.black.withOpacity(0.8), BlendMode.srcOut),
+                      child: Stack(
+                        fit: StackFit.expand,
+                        alignment: Alignment.center,
+                        children: [
+                          Container(
+                            decoration: const BoxDecoration(
+                                color: Colors.black,
+                                backgroundBlendMode: BlendMode
+                                    .dstOut), // This one will handle background + difference out
+                          ),
+                          Align(
+                            alignment: Alignment.center,
+                            child: Container(
+                              height: 280,
+                              width: 280,
+                              decoration: const BoxDecoration(
+                                color: Colors.red,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    CustomPaint(
+                      painter: ShapePainter1(),
+                      child: SizedBox(
+                        width: MediaQuery.of(context).size.width,
+                        height: MediaQuery.of(context).size.height,
+                      ),
+                    ),
+                    CustomPaint(
+                      painter: ShapePainter2(),
+                      child: SizedBox(
+                        width: MediaQuery.of(context).size.width,
+                        height: MediaQuery.of(context).size.height,
+                      ),
+                    ),
+                    CustomPaint(
+                      painter: ShapePainter3(),
+                      child: SizedBox(
+                        width: MediaQuery.of(context).size.width,
+                        height: MediaQuery.of(context).size.height,
+                      ),
+                    ),
+                    CustomPaint(
+                      painter: ShapePainter4(),
+                      child: SizedBox(
+                        width: MediaQuery.of(context).size.width,
+                        height: MediaQuery.of(context).size.height,
+                      ),
+                    ),
+                    CustomPaint(
+                      painter: ShapePainter5(),
+                      child: SizedBox(
+                        width: MediaQuery.of(context).size.width,
+                        height: MediaQuery.of(context).size.height,
+                      ),
+                    ),
+                    CustomPaint(
+                      painter: ShapePainter6(),
+                      child: SizedBox(
+                        width: MediaQuery.of(context).size.width,
+                        height: MediaQuery.of(context).size.height,
+                      ),
+                    ),
+                    CustomPaint(
+                      painter: ShapePainter7(),
+                      child: SizedBox(
+                        width: MediaQuery.of(context).size.width,
+                        height: MediaQuery.of(context).size.height,
+                      ),
+                    ),
+                    CustomPaint(
+                      painter: ShapePainter8(),
+                      child: SizedBox(
+                        width: MediaQuery.of(context).size.width,
+                        height: MediaQuery.of(context).size.height,
+                      ),
+                    ),
+                  ],
                 ),
               );
             }
@@ -155,10 +250,236 @@ class _MobileScannerState extends State<MobileScanner>
     }
   }
 
+  void animateScanAnimation(bool reverse) {
+    if (reverse) {
+      _animationController.reverse(from: 1.0);
+    } else {
+      _animationController.forward(from: 0.0);
+    }
+  }
+
   @override
   void dispose() {
+    _animationController.dispose();
     controller.dispose();
     WidgetsBinding.instance?.removeObserver(this);
     super.dispose();
+  }
+}
+
+class ScannerAnimation extends AnimatedWidget {
+  final bool stopped;
+  final double width;
+  final double hs;
+  ScannerAnimation(
+    this.stopped,
+    this.width,
+    this.hs, {
+    Key? key,
+    required Animation<double> animation,
+  }) : super(
+          key: key,
+          listenable: animation,
+        );
+
+  @override
+  Widget build(BuildContext context) {
+    final Animation<double> animation = listenable as Animation<double>;
+    final scorePosition = animation.value * 240 + (hs / 2 - 140);
+
+    Color color1 = const Color(0x5532CD32);
+    Color color2 = const Color(0x0032CD32);
+
+    if (animation.status == AnimationStatus.reverse) {
+      color1 = const Color(0x0032CD32);
+      color2 = const Color(0x5532CD32);
+    }
+    return Positioned(
+      bottom: scorePosition,
+      // left: 16.0,
+      child: Opacity(
+        opacity: (stopped) ? 0.0 : 1.0,
+        child: Container(
+          height: 60.0,
+          width: width,
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              begin: Alignment.topCenter,
+              end: Alignment.bottomCenter,
+              stops: const [0.1, 0.9],
+              colors: [color1, color2],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class ShapePainter1 extends CustomPainter {
+  @override
+  void paint(Canvas canvas, Size size) {
+    var paint = Paint()
+      ..color = Colors.teal
+      ..strokeWidth = 5
+      ..style = PaintingStyle.stroke
+      ..strokeCap = StrokeCap.round;
+
+    var path = Path();
+    path.moveTo(size.width / 2 - 140, size.height / 2 + 140);
+    path.lineTo(size.width / 2 - 120, size.height / 2 + 140);
+    canvas.drawPath(path, paint);
+  }
+
+  @override
+  bool shouldRepaint(CustomPainter oldDelegate) {
+    return true;
+  }
+}
+
+class ShapePainter2 extends CustomPainter {
+  @override
+  void paint(Canvas canvas, Size size) {
+    var paint = Paint()
+      ..color = Colors.teal
+      ..strokeWidth = 5
+      ..style = PaintingStyle.stroke
+      ..strokeCap = StrokeCap.round;
+
+    var path = Path();
+    path.moveTo(size.width / 2 - 140, size.height / 2 + 140);
+    path.lineTo(size.width / 2 - 140, size.height / 2 + 120);
+    canvas.drawPath(path, paint);
+  }
+
+  @override
+  bool shouldRepaint(CustomPainter oldDelegate) {
+    return true;
+  }
+}
+
+class ShapePainter3 extends CustomPainter {
+  @override
+  void paint(Canvas canvas, Size size) {
+    var paint = Paint()
+      ..color = Colors.teal
+      ..strokeWidth = 5
+      ..style = PaintingStyle.stroke
+      ..strokeCap = StrokeCap.round;
+
+    var path = Path();
+    path.moveTo(size.width / 2 - 140, size.height / 2 - 140);
+    path.lineTo(size.width / 2 - 120, size.height / 2 - 140);
+    canvas.drawPath(path, paint);
+  }
+
+  @override
+  bool shouldRepaint(CustomPainter oldDelegate) {
+    return true;
+  }
+}
+
+class ShapePainter4 extends CustomPainter {
+  @override
+  void paint(Canvas canvas, Size size) {
+    var paint = Paint()
+      ..color = Colors.teal
+      ..strokeWidth = 5
+      ..style = PaintingStyle.stroke
+      ..strokeCap = StrokeCap.round;
+
+    var path = Path();
+    path.moveTo(size.width / 2 - 140, size.height / 2 - 140);
+    path.lineTo(size.width / 2 - 140, size.height / 2 - 120);
+    canvas.drawPath(path, paint);
+  }
+
+  @override
+  bool shouldRepaint(CustomPainter oldDelegate) {
+    return true;
+  }
+}
+
+class ShapePainter5 extends CustomPainter {
+  @override
+  void paint(Canvas canvas, Size size) {
+    var paint = Paint()
+      ..color = Colors.teal
+      ..strokeWidth = 5
+      ..style = PaintingStyle.stroke
+      ..strokeCap = StrokeCap.round;
+
+    var path = Path();
+    path.moveTo(size.width / 2 + 140, size.height / 2 + 140);
+    path.lineTo(size.width / 2 + 120, size.height / 2 + 140);
+    canvas.drawPath(path, paint);
+  }
+
+  @override
+  bool shouldRepaint(CustomPainter oldDelegate) {
+    return true;
+  }
+}
+
+class ShapePainter6 extends CustomPainter {
+  @override
+  void paint(Canvas canvas, Size size) {
+    var paint = Paint()
+      ..color = Colors.teal
+      ..strokeWidth = 5
+      ..style = PaintingStyle.stroke
+      ..strokeCap = StrokeCap.round;
+
+    var path = Path();
+    path.moveTo(size.width / 2 + 140, size.height / 2 + 120);
+    path.lineTo(size.width / 2 + 140, size.height / 2 + 140);
+    canvas.drawPath(path, paint);
+  }
+
+  @override
+  bool shouldRepaint(CustomPainter oldDelegate) {
+    return true;
+  }
+}
+
+class ShapePainter7 extends CustomPainter {
+  @override
+  void paint(Canvas canvas, Size size) {
+    var paint = Paint()
+      ..color = Colors.teal
+      ..strokeWidth = 5
+      ..style = PaintingStyle.stroke
+      ..strokeCap = StrokeCap.round;
+
+    var path = Path();
+    path.moveTo(size.width / 2 + 140, size.height / 2 - 140);
+    path.lineTo(size.width / 2 + 120, size.height / 2 - 140);
+    canvas.drawPath(path, paint);
+  }
+
+  @override
+  bool shouldRepaint(CustomPainter oldDelegate) {
+    return true;
+  }
+}
+
+class ShapePainter8 extends CustomPainter {
+  @override
+  void paint(Canvas canvas, Size size) {
+    var paint = Paint()
+      ..color = Colors.teal
+      ..strokeWidth = 5
+      ..style = PaintingStyle.stroke
+      ..strokeCap = StrokeCap.round;
+
+    var path = Path();
+    path.moveTo(size.width / 2 + 140, size.height / 2 - 140);
+    path.lineTo(size.width / 2 + 140, size.height / 2 - 120);
+    canvas.drawPath(path, paint);
+  }
+
+  @override
+  bool shouldRepaint(CustomPainter oldDelegate) {
+    return true;
   }
 }

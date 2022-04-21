@@ -24,7 +24,15 @@ import io.flutter.plugin.common.MethodChannel
 import io.flutter.plugin.common.PluginRegistry
 import io.flutter.view.TextureRegistry
 import java.io.File
-
+import android.graphics.ImageFormat
+import android.media.Image
+import 	android.graphics.Rect
+import android.graphics.Bitmap
+import android.graphics.YuvImage
+import java.io.OutputStream
+import 	java.io.ByteArrayOutputStream
+import 	android.graphics.BitmapFactory
+import 	android.util.Base64
 
 class MobileScanner(private val activity: Activity, private val textureRegistry: TextureRegistry)
     : MethodChannel.MethodCallHandler, EventChannel.StreamHandler, PluginRegistry.RequestPermissionsResultListener {
@@ -99,23 +107,21 @@ class MobileScanner(private val activity: Activity, private val textureRegistry:
 //        when (analyzeMode) {
 //            AnalyzeMode.BARCODE -> {
                 val mediaImage = imageProxy.image ?: return@Analyzer
-                val inputImage = InputImage.fromMediaImage(mediaImage, imageProxy.imageInfo.rotationDegrees)
+        val inputImage = InputImage.fromMediaImage(mediaImage, imageProxy.imageInfo.rotationDegrees)
+                    scanner.process(inputImage)
+                .addOnSuccessListener { barcodes ->
+                    for (barcode in barcodes) {
+                        if (barcode.boundingBox!!.left > 100 && barcode.boundingBox!!.right < 400 &&
+                        barcode.boundingBox!!.top > 150 && barcode.boundingBox!!.bottom < 500){val event = mapOf("name" to "barcode", "data" to barcode.data)
+                            Log.i("LOG", "event: $event")
+                            sink?.success(event)}
 
-                scanner.process(inputImage)
-                        .addOnSuccessListener { barcodes ->
-                            for (barcode in barcodes) {
-                                val event = mapOf("name" to "barcode", "data" to barcode.data)
-                                sink?.success(event)
-                            }
-                        }
-                        .addOnFailureListener { e -> Log.e(TAG, e.message, e) }
-                        .addOnCompleteListener { imageProxy.close() }
-//            }
-//            else -> imageProxy.close()
-//        }
+                    }
+                }
+                .addOnFailureListener { e -> Log.e(TAG, e.message, e) }
+                .addOnCompleteListener { imageProxy.close() }
+
     }
-
-
     private var scanner = BarcodeScanning.getClient()
 
     @ExperimentalGetImage
@@ -157,7 +163,7 @@ class MobileScanner(private val activity: Activity, private val textureRegistry:
                 // Preview
                 val surfaceProvider = Preview.SurfaceProvider { request ->
                     val texture = textureEntry!!.surfaceTexture()
-//                    texture.setDefaultBufferSize(1280, 720)
+                    // texture.setDefaultBufferSize(240, 240)
                     texture.setDefaultBufferSize(request.resolution.width, request.resolution.height)
                     val surface = Surface(texture)
                     request.provideSurface(surface, executor) { }
@@ -167,20 +173,16 @@ class MobileScanner(private val activity: Activity, private val textureRegistry:
                 val previewBuilder = Preview.Builder()
                 if (ratio != null) {
                     previewBuilder.setTargetAspectRatio(ratio)
-//                    previewBuilder.setTargetResolution(Size(1280, 720))
                 }
-//                previewBuilder.setTargetResolution(Size(720, 1280))
                 preview = previewBuilder.build().apply { setSurfaceProvider(surfaceProvider) }
 
                 // Build the analyzer to be passed on to MLKit
                 val analysisBuilder = ImageAnalysis.Builder()
                         .setBackpressureStrategy(ImageAnalysis.STRATEGY_KEEP_ONLY_LATEST)
-//                if (ratio != null) {
-////                    analysisBuilder.setTargetAspectRatio(ratio)
-//                    analysisBuilder.setTargetResolution(Size(300, 300))
-//                }
-//                analysisBuilder.setTargetAspectRatio(1)
-                analysisBuilder.setTargetResolution(Size(240, 320))
+                if (ratio != null) {
+                    analysisBuilder.setTargetAspectRatio(ratio)
+                }
+                analysisBuilder.setTargetResolution(Size(200,300))
                 val analysis = analysisBuilder.build().apply { setAnalyzer(executor, analyzer) }
 
                 // Select the correct camera
@@ -190,9 +192,9 @@ class MobileScanner(private val activity: Activity, private val textureRegistry:
 
                 val analysisSize = analysis.resolutionInfo?.resolution ?: Size(0, 0)
                 val previewSize = preview!!.resolutionInfo?.resolution ?: Size(0, 0)
-//                Log.i("LOG", "Analyzer: $ratio")
                 Log.i("LOG", "Analyzer: $analysisSize")
                 Log.i("LOG", "Preview: $previewSize")
+
                 // Register the torch listener
                 camera!!.cameraInfo.torchState.observe(activity) { state ->
                     // TorchState.OFF = 0; TorchState.ON = 1
