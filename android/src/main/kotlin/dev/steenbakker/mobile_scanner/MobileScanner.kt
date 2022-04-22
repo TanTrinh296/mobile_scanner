@@ -110,9 +110,11 @@ class MobileScanner(private val activity: Activity, private val textureRegistry:
         val inputImage = InputImage.fromMediaImage(mediaImage, imageProxy.imageInfo.rotationDegrees)
                     scanner.process(inputImage)
                 .addOnSuccessListener { barcodes ->
+
                     for (barcode in barcodes) {
-                        if (barcode.boundingBox!!.left > 100 && barcode.boundingBox!!.right < 400 &&
-                        barcode.boundingBox!!.top > 150 && barcode.boundingBox!!.bottom < 500){val event = mapOf("name" to "barcode", "data" to barcode.data)
+                        Log.i("LOG", "event: ${barcode.boundingBox!!.left}  ${barcode.boundingBox!!.right}  ${barcode.boundingBox!!.top}  ${barcode.boundingBox!!.bottom}")
+                        if (barcode.boundingBox!!.left > 60 && barcode.boundingBox!!.right < 430 &&
+                        barcode.boundingBox!!.top > 150 && barcode.boundingBox!!.bottom < 550){val event = mapOf("name" to "barcode", "data" to barcode.data)
                             Log.i("LOG", "event: $event")
                             sink?.success(event)}
 
@@ -129,8 +131,10 @@ class MobileScanner(private val activity: Activity, private val textureRegistry:
         if (camera != null && preview != null) {
             val resolution = preview!!.resolutionInfo!!.resolution
             val portrait = camera!!.cameraInfo.sensorRotationDegrees % 180 == 0
-            val width = resolution.width.toDouble()
-            val height = resolution.height.toDouble()
+            val width = 1600.0
+            val height = 1200.0
+//            val width = resolution.width.toDouble()
+//            val height = resolution.height.toDouble()
             val size = if (portrait) mapOf("width" to width, "height" to height) else mapOf("width" to height, "height" to width)
             val answer = mapOf("textureId" to textureEntry!!.id(), "size" to size, "torchable" to camera!!.cameraInfo.hasFlashUnit())
             result.success(answer)
@@ -206,8 +210,10 @@ class MobileScanner(private val activity: Activity, private val textureRegistry:
 
                 val resolution = preview!!.resolutionInfo!!.resolution
                 val portrait = camera!!.cameraInfo.sensorRotationDegrees % 180 == 0
-                val width = resolution.width.toDouble()
-                val height = resolution.height.toDouble()
+                val width = 1600.0
+                val height = 1200.0
+//                val width = resolution.width.toDouble()
+//                val height = resolution.height.toDouble()
                 val size = if (portrait) mapOf("width" to width, "height" to height) else mapOf("width" to height, "height" to width)
                 val answer = mapOf("textureId" to textureEntry!!.id(), "size" to size, "torchable" to camera!!.cameraInfo.hasFlashUnit())
                 result.success(answer)
