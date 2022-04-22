@@ -238,12 +238,14 @@ class MobileScanner(private val activity: Activity, private val textureRegistry:
     private fun analyzeImage(call: MethodCall, result: MethodChannel.Result) {
         val uri = Uri.fromFile( File(call.arguments.toString()))
         val inputImage = InputImage.fromFilePath(activity, uri)
-
+        Log.i("LOG", "--------------------------${uri}------------------------------")
         var barcodeFound = false
         scanner.process(inputImage)
             .addOnSuccessListener { barcodes ->
+                Log.i("LOG", "--------------------------${barcodes}------------------------------")
                 for (barcode in barcodes) {
                     barcodeFound = true
+                    Log.i("LOG", "event: $barcode")
                     sink?.success(mapOf("name" to "barcode", "data" to barcode.data))
                 }
             }

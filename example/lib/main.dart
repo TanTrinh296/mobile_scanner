@@ -18,14 +18,14 @@ class MyHome extends StatelessWidget {
           mainAxisAlignment: MainAxisAlignment.center,
           crossAxisAlignment: CrossAxisAlignment.center,
           children: [
-            // ElevatedButton(
-            //   onPressed: () {
-            //     Navigator.of(context).push(MaterialPageRoute(
-            //       builder: (context) => const BarcodeScannerWithController(),
-            //     ));
-            //   },
-            //   child: const Text('MobileScanner with Controller'),
-            // ),
+            ElevatedButton(
+              onPressed: () {
+                Navigator.of(context).push(MaterialPageRoute(
+                  builder: (context) => const BarcodeScannerWithController(),
+                ));
+              },
+              child: const Text('MobileScanner with Controller'),
+            ),
             ElevatedButton(
               onPressed: () {
                 Navigator.of(context).push(MaterialPageRoute(
